@@ -8,6 +8,7 @@ type Init struct {
 
 func (a *Init) Execute() []operations.Operation {
 	return []operations.Operation{
-		&operations.MakeDirOperation{Path: ".dockerized"},
+		&operations.AssertPathDoesNotExist{Path: ".dockerized"},
+		&operations.MakeDir{Path: ".dockerized"},
 	}
 }
