@@ -17,3 +17,12 @@ type CheckIfPathExists struct {
 func (operation *CheckIfPathExists) Execute() (error, interface{}) {
 	return errors.New("CheckIfPathExists not implemented yet"), nil
 }
+
+type WriteFile struct {
+	Path    string
+	Content string
+}
+
+func (Operation *WriteFile) Execute() (error, interface{}) {
+	return errors.New("WriteFile not implemented yet"), nil
+}
