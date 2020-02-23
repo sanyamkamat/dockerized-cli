@@ -6,9 +6,10 @@ type Init struct {
 	WithYarnCache bool
 }
 
-func (a *Init) Execute() []operations.Operation {
-	return []operations.Operation{
-		&operations.AssertPathDoesNotExist{Path: ".dockerized"},
-		&operations.MakeDir{Path: ".dockerized"},
+func (a *Init) Execute(dispatcher operations.Dispatcher) error {
+	err, exists := dispatcher.Dispatch(&operations.CheckIfPathExists{Path: ".dockerized"})
+	if exists == false {
+		dispatcher.Dispatch(&operations.MakeDir{Path: ".dockerized"})
 	}
+	return err
 }

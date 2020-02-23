@@ -1,5 +1,5 @@
 package operations
 
 type Operation interface {
-	Execute() error
+	Execute() (error, interface{})
 }

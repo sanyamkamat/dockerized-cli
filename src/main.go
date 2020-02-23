@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"benzaita/dockerized/actions"
-	"benzaita/dockerized/interpreter"
+	"benzaita/dockerized/operations"
 )
 
 func toCliError(err error) error {
@@ -18,6 +18,8 @@ func toCliError(err error) error {
 }
 
 func main() {
+	dispatcher := &operations.DefaultDispatcher{}
+
 	app := &cli.App{
 		Name: "Dockerized",
 		Commands: []*cli.Command{
@@ -41,8 +43,8 @@ func main() {
 					action := &actions.Init{
 						WithYarnCache: c.Bool("withYarnCache"),
 					}
-					operations := action.Execute()
-					return toCliError(interpreter.Execute(operations))
+					err := action.Execute(dispatcher)
+					return toCliError(err)
 				},
 			},
 		},

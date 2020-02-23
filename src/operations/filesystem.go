@@ -6,14 +6,14 @@ type MakeDir struct {
 	Path string
 }
 
-func (operation *MakeDir) Execute() error {
-	return errors.New("MakeDir not implemented yet")
+func (operation *MakeDir) Execute() (error, interface{}) {
+	return errors.New("MakeDir not implemented yet"), nil
 }
 
-type AssertPathDoesNotExist struct {
+type CheckIfPathExists struct {
 	Path string
 }
 
-func (operation *AssertPathDoesNotExist) Execute() error {
-	return errors.New("AssertPathDoesNotExist not implemented yet")
+func (operation *CheckIfPathExists) Execute() (error, interface{}) {
+	return errors.New("CheckIfPathExists not implemented yet"), nil
 }
