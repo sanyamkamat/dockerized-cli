@@ -1,9 +1,6 @@
 package actions
 
-import (
-	"benzaita/dockerized/operations"
-	"errors"
-)
+import "benzaita/dockerized/operations"
 
 type Init struct {
 	WithYarnCache bool
@@ -11,16 +8,8 @@ type Init struct {
 
 func (a *Init) Execute(dispatcher operations.Dispatcher) error {
 	err, exists := dispatcher.Dispatch(&operations.CheckIfPathExists{Path: ".dockerized"})
-
-	if exists == true {
-		return errors.New("Refusing to override existing directory: .dockerized")
+	if exists == false {
+		dispatcher.Dispatch(&operations.MakeDir{Path: ".dockerized"})
 	}
-
-	dispatcher.Dispatch(&operations.MakeDir{Path: ".dockerized"})
-	dispatcher.Dispatch(&operations.WriteFile{
-		Path:    ".dockerized/Dockerfile.dockerized",
-		Content: "132",
-	})
-
 	return err
 }
