@@ -1,35 +1,57 @@
+//go:generate $GOPATH/bin/mockgen -package mocks -destination mocks/dispatcher_generated.go benzaita/dockerized/operations Dispatcher
+
 package actions
 
 import (
-	"benzaita/dockerized/mock_operations"
+	"benzaita/dockerized/actions/mocks"
 	"benzaita/dockerized/operations"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
-// func TestCreatesDockerizedDirectory(t *testing.T) {
-// 	init := &Init{
-// 		WithYarnCache: false,
-// 	}
-
-// 	ops := init.Execute()
-// 	expected := &operations.MakeDir{Path: ".dockerized"}
-// 	if funk.Contains(ops, &expected) == false {
-// 		t.Error(spew.Sprintf("\nhave %#v\nwant an array containing %#v", ops, expected))
-// 	}
-// }
-
-func TestChecksForExistingDirectory(t *testing.T) {
+func TestCreatesDirectoryIfMissing(t *testing.T) {
 	init := &Init{
 		WithYarnCache: false,
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	m := mock_operations.NewMockDispatcher(mockCtrl)
+	m := mocks.NewMockDispatcher(mockCtrl)
 	m.EXPECT().Dispatch(&operations.CheckIfPathExists{Path: ".dockerized"}).Return(nil, false)
-	m.EXPECT().Dispatch(&operations.MakeDir{Path: ".dockerized"}).Return(nil, nil)
+	m.EXPECT().Dispatch(&operations.MakeDir{Path: ".dockerized"})
 
-	init.Execute(m)
+	assert.Nil(t, init.Execute(m))
+}
+
+// func TestFailsIfDirectoryExists(t *testing.T) {
+// 	init := &Init{
+// 		WithYarnCache: false,
+// 	}
+// 	mockCtrl := gomock.NewController(t)
+// 	defer mockCtrl.Finish()
+
+// 	m := mocks.NewMockDispatcher(mockCtrl)
+// 	m.EXPECT().Dispatch(&operations.CheckIfPathExists{Path: ".dockerized"}).Return(nil, true)
+
+// 	err := init.Execute(m)
+// 	expectedError := errors.New("Refusing to override existing directory: .dockerized")
+// 	assert.Equal(t, expectedError, err)
+// }
+
+func TestWritesDockerfile(t *testing.T) {
+	init := &Init{
+		WithYarnCache: false,
+	}
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	m := mocks.NewMockDispatcher(mockCtrl)
+	m.EXPECT().Dispatch(&operations.CheckIfPathExists{Path: ".dockerized"}).Return(nil, false)
+	m.EXPECT().Dispatch(&operations.MakeDir{Path: ".dockerized"})
+	m.EXPECT().Dispatch(&operations.WriteFile{Path: ".dockerized/Dockerfile.dockerized", Content: "123"})
+
+	err := init.Execute(m)
+	assert.Nil(t, err)
 }
