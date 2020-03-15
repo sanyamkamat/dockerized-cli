@@ -1,7 +1,7 @@
 extern crate dockerized;
 extern crate clap;
 
-use dockerized::core::{Command, InitCommand, FailCommand};
+use dockerized::command::{Command, InitCommand, FailCommand};
 use clap::{App, SubCommand, Arg};
 
 fn main() {
