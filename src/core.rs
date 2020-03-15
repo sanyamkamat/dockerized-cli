@@ -1,17 +1,31 @@
-pub enum Command {
-    Init,
-    Fail(String)
-}
-
-pub trait Execute {
+pub trait Command {
     fn execute(&self) -> Result<String, String>;
 }
 
-impl Execute for Command {
+pub struct InitCommand;
+impl InitCommand {
+    pub fn new() -> InitCommand {
+        InitCommand
+    }
+}
+impl Command for InitCommand {
     fn execute(&self) -> Result<String, String> {
-        match self {
-            Command::Init => Ok("init".to_string()),
-            Command::Fail(message) => Err(message.clone()),
+        Err("TODO".to_string())
+    }
+}
+
+pub struct FailCommand {
+    message: String,
+}
+impl FailCommand {
+    pub fn new(message: String) -> FailCommand {
+        FailCommand{
+            message: message.to_string()
         }
+    }
+}
+impl Command for FailCommand {
+    fn execute(&self) -> Result<String, String> {
+        Err(self.message.clone())
     }
 }

@@ -1,7 +1,7 @@
 extern crate dockerized;
 extern crate clap;
 
-use dockerized::core::{Command, Execute};
+use dockerized::core::{Command, InitCommand, FailCommand};
 use clap::{App, SubCommand, Arg};
 
 fn main() {
@@ -19,7 +19,7 @@ fn main() {
     }
 }
 
-fn parse_cli_arguments() -> Result<Command, String> {
+fn parse_cli_arguments() -> Result<Box<dyn Command>, String> {
     let matches = App::new("dockerized")
         .version("0.10.0")
         .subcommand(
@@ -33,8 +33,8 @@ fn parse_cli_arguments() -> Result<Command, String> {
         .get_matches();
 
     match matches.subcommand() {
-        ("init", _) => Ok(Command::Init),
-        ("fail", Some(subm)) => Ok(Command::Fail(subm.value_of("message").unwrap().to_string())),
+        ("init", _) => Ok(Box::new(InitCommand::new())),
+        ("fail", Some(subm)) => Ok(Box::new(FailCommand::new(subm.value_of("message").unwrap().to_string()))),
         (command, _) => Err(format!("Unexpected command: {}", command))
     }
 }
