@@ -1,50 +1,69 @@
 use crate::command::Command;
-use std::path::PathBuf;
 use std::fs::create_dir;
+use std::path::PathBuf;
 
 pub struct InitCommand {
-    working_dir: PathBuf
+    // TODO should this struct hold a &Path instead? How about the lifetime?
+    working_dir: PathBuf,
 }
 
 impl InitCommand {
     pub fn new(working_dir: PathBuf) -> InitCommand {
-        InitCommand{
-            working_dir: working_dir
+        InitCommand {
+            working_dir: working_dir,
         }
     }
 }
 
 impl Command for InitCommand {
+
+    // TODO should that be Result<&str, &str>?
     fn execute(&self) -> Result<String, String> {
-        create_dir(self.working_dir.join(".dockerized")).unwrap();
+        let result = create_dir(self.working_dir.join(".dockerized"));
+        friendlify_already_exists_error(result)?;
 
         Ok("Initialized .dockerized".to_string())
     }
 }
 
+// TODO is there a more idiomatic way to convert one error type to another?
+fn friendlify_already_exists_error(result: std::io::Result<()>) -> Result<(), String> {
+    if let Err(err) = result {
+        match err.kind() {
+            std::io::ErrorKind::AlreadyExists => return Err("Already initialized".to_string()),
+            _ => return Err(err.to_string()),
+        }
+    } else {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::fs::remove_dir_all;
-    use std::env::temp_dir;
-    use std::path::Path;
+    extern crate tempfile;
 
-    fn given_working_dir_is_empty(working_dir: &Path) {
-        if working_dir.exists() {
-            remove_dir_all(&working_dir).unwrap();
-        }
-        create_dir(&working_dir).unwrap();
-    }
+    use super::*;
+    use tempfile::tempdir;
 
     #[test]
     fn creates_directory() {
-        let working_dir = temp_dir().join("dockerized-test");
-        given_working_dir_is_empty(&working_dir);
+        let working_dir = tempdir().unwrap();
 
-        let init_command = InitCommand::new(working_dir.to_owned());
+        let init_command = InitCommand::new(working_dir.path().to_owned());
         let result = init_command.execute();
 
         assert_eq!(result.unwrap(), "Initialized .dockerized");
-        assert!(working_dir.join(".dockerized").is_dir());
+        assert!(working_dir.path().join(".dockerized").is_dir());
+    }
+
+    #[test]
+    fn fails_if_already_initialized() {
+        let working_dir = tempdir().unwrap();
+        create_dir(&working_dir.path().join(".dockerized")).unwrap();
+
+        let init_command = InitCommand::new(working_dir.path().to_owned());
+        let result = init_command.execute();
+
+        assert_eq!(result.unwrap_err(), "Already initialized");
     }
 }
