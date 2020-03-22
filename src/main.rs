@@ -33,7 +33,7 @@ fn parse_cli_arguments() -> Result<Box<dyn Command>, String> {
         .get_matches();
 
     match matches.subcommand() {
-        ("init", _) => Ok(Box::new(InitCommand::new())),
+        ("init", _) => Ok(Box::new(InitCommand::new(std::env::current_dir().unwrap()))),
         ("fail", Some(subm)) => Ok(Box::new(FailCommand::new(subm.value_of("message").unwrap().to_string()))),
         (command, _) => Err(format!("Unexpected command: {}", command))
     }
