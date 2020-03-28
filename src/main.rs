@@ -6,16 +6,10 @@ use clap::{App, SubCommand, Arg};
 
 fn main() {
     let command = parse_cli_arguments().unwrap();
-    let result = command.execute();
+    let result = command.execute(&mut std::io::stdout(), &mut std::io::stderr());
     match result {
-        Ok(result) => {
-            println!("{}", result);
-            std::process::exit(0);
-        },
-        Err(message) => {
-            eprintln!("Error: {}", message);
-            std::process::exit(1);
-        }
+        Ok(_) => std::process::exit(0),
+        Err(_) => std::process::exit(1),
     }
 }
 

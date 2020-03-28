@@ -1,5 +1,7 @@
+use std::io::Write;
+
 pub trait Command {
-    fn execute(&self) -> Result<String, String>;
+    fn execute(&self, out_writer: &mut dyn Write, err_writer: &mut dyn Write) -> Result<(), ()>;
 }
 
 mod init;
