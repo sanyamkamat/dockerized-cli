@@ -1,10 +1,22 @@
 use crate::command::Command;
 use std::fs::create_dir;
 use std::path::PathBuf;
+use indoc::indoc;
 
 pub struct InitCommand {
     // TODO should this struct hold a &Path instead? How about the lifetime?
     working_dir: PathBuf,
+}
+
+impl Command for InitCommand {
+    // TODO should that be Result<&str, &str>?
+    fn execute(&self) -> Result<String, String> {
+        let result = create_dir(self.working_dir.join(".dockerized"));
+        friendlify_already_exists_error(result)?;
+
+        self.write_dockerfile()?;
+        Ok("Initialized .dockerized".to_string())
+    }
 }
 
 impl InitCommand {
@@ -13,16 +25,18 @@ impl InitCommand {
             working_dir: working_dir,
         }
     }
-}
 
-impl Command for InitCommand {
+    fn write_dockerfile(&self) -> Result<(), String> {
+        let dockerfile_path = self.working_dir.join(".dockerized").join("Dockerfile.dockerized");
+        let result = std::fs::write(dockerfile_path, indoc!("
+            FROM busybox
 
-    // TODO should that be Result<&str, &str>?
-    fn execute(&self) -> Result<String, String> {
-        let result = create_dir(self.working_dir.join(".dockerized"));
-        friendlify_already_exists_error(result)?;
-
-        Ok("Initialized .dockerized".to_string())
+            # Add your build dependencies here
+        "));
+        match result {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err.to_string())
+        }
     }
 }
 
@@ -50,10 +64,19 @@ mod tests {
         let working_dir = tempdir().unwrap();
 
         let init_command = InitCommand::new(working_dir.path().to_owned());
+        init_command.execute().unwrap();
+
+        assert!(working_dir.path().join(".dockerized").is_dir());
+    }
+
+    #[test]
+    fn output_on_success() {
+        let working_dir = tempdir().unwrap();
+
+        let init_command = InitCommand::new(working_dir.path().to_owned());
         let result = init_command.execute();
 
         assert_eq!(result.unwrap(), "Initialized .dockerized");
-        assert!(working_dir.path().join(".dockerized").is_dir());
     }
 
     #[test]
@@ -65,5 +88,27 @@ mod tests {
         let result = init_command.execute();
 
         assert_eq!(result.unwrap_err(), "Already initialized");
+    }
+
+    #[test]
+    fn creates_dockerfile() {
+        let working_dir = tempdir().unwrap();
+
+        let init_command = InitCommand::new(working_dir.path().to_owned());
+        init_command.execute().unwrap();
+
+        let dockerfile_path = working_dir
+            .path()
+            .join(".dockerized")
+            .join("Dockerfile.dockerized");
+
+        assert!(dockerfile_path.is_file());
+
+        let dockerfile_content = std::fs::read_to_string(dockerfile_path).unwrap();
+        assert_eq!(dockerfile_content, indoc!("
+            FROM busybox
+
+            # Add your build dependencies here
+        "));
     }
 }
